@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>枚举值 &mdash; help_manual 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="help_manual 0.1 documentation" href="index.html" />
+    <link rel="next" title="接口" href="api.html" />
+    <link rel="prev" title="结构体" href="struct.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>枚举值<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="stat-st-mode">
+<h2>stat st_mode<a class="headerlink" href="#stat-st-mode" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>st_mode：
+   S_IFMT   0170000    文件类型的位遮罩
+   S_IFSOCK 0140000    scoket
+   S_IFLNK  0120000    符号连接
+   S_IFREG 0100000     一般文件
+   S_IFBLK 0060000     区块装置
+   S_IFDIR 0040000     目录
+   S_IFCHR 0020000     字符装置
+   S_IFIFO 0010000     先进先出
+
+   S_ISUID 04000     文件的(set user-id on execution)位
+   S_ISGID 02000     文件的(set group-id on execution)位
+   S_ISVTX 01000     文件的sticky位
+
+   S_IRUSR(S_IREAD) 00400     文件所有者具可读取权限
+   S_IWUSR(S_IWRITE)00200     文件所有者具可写入权限
+   S_IXUSR(S_IEXEC) 00100     文件所有者具可执行权限
+
+   S_IRGRP 00040             用户组具可读取权限
+   S_IWGRP 00020             用户组具可写入权限
+   S_IXGRP 00010             用户组具可执行权限
+
+   S_IROTH 00004             其他用户具可读取权限
+   S_IWOTH 00002             其他用户具可写入权限
+   S_IXOTH 00001             其他用户具可执行权限
+
+检查st_mode的一些宏定义：
+   S_ISLNK (st_mode)    判断是否为符号连接
+   S_ISREG (st_mode)    是否为一般文件
+   S_ISDIR (st_mode)    是否为目录
+   S_ISCHR (st_mode)    是否为字符装置文件
+   S_ISBLK (s3e)        是否为先进先出
+   S_ISSOCK (st_mode)   是否为socket
+
+
+常用API
+int stat(const char *path, struct stat *buf);
+int fstat(int fd, struct stat *buf);
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">枚举值</a><ul>
+<li><a class="reference internal" href="#stat-st-mode">stat st_mode</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="struct.html" title="previous chapter">结构体</a></li>
+      <li>Next: <a href="api.html" title="next chapter">接口</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/enum.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, xiaohei.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/enum.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

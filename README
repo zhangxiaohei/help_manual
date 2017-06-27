@@ -1,0 +1,11 @@
+该项目是一个依赖于Sphinx 的随记手册
+Sphinx 使用 reStructuredText 标记语法（和其他一些语法）来提供文档控制。
+
+Sphinx官方文档
+http://www.sphinx-doc.org/en/stable/
+
+struct.rst      常用数据结构
+enum.rst        常用枚举值
+api-sample.rst  常用api使用
+api.rst         常用api使用
+other.rst       其它

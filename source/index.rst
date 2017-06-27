@@ -11,7 +11,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   struct.rst
+   struct
+   enum
+   api
+   api-sample
+   other
 
 
 Indices and tables

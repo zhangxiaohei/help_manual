@@ -1,0 +1,369 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>接口 &mdash; help_manual 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="help_manual 0.1 documentation" href="index.html" />
+    <link rel="next" title="接口使用" href="api-sample.html" />
+    <link rel="prev" title="枚举值" href="enum.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>接口<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sleep">
+<h2>sleep 三种睡眠函数<a class="headerlink" href="#sleep" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>unsigned int sleep(unsigned int seconds); 秒
+若被中断打断，返回剩余时间
+
+int usleep(useconds_t usec); 微妙
+若被中断打断，返回剩余时间
+
+int nanosleep(const struct timespec *req, struct timespec *rem);纳秒时间
+要睡眠的时间req；剩余睡眠时间，如果要中断，通过rem返回过来。
+</pre></div>
+</div>
+</div>
+<div class="section" id="setitimer">
+<h2>setitimer 函数<a class="headerlink" href="#setitimer" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>功能:setitimer()比alarm功能强大，支持3种类型的定时器
+原型:int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue));
+which:指定定时器类型
+ovalue:可不做处理。
+返回值:成功返回0失败返回-1
+
+ITIMER_REAL：经过指定的时间后，内核将发送SIGALRM信号给本进程
+ITIMER_VIRTUAL ：程序在用户空间执行指定的时间后，内核将发送SIGVTALRM信号给本进程
+ITIMER_PROF ：进程在内核空间中执行时，时间计数会减少，通常与ITIMER_VIRTUAL共用，代表进程在用户空间与内核空间中运行指定时间后，内核将发送SIGPROF信号给本进程。
+</pre></div>
+</div>
+</div>
+<div class="section" id="socket-bind-listen-accept-connect">
+<h2>socket/bind/listen/accept/connect 建立连接函数<a class="headerlink" href="#socket-bind-listen-accept-connect" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>int socket(int family, int type, int protocol);
+
+ 功能：用于创建一个socket描述符来唯一标识这个socket
+ family：协议域，又称为协议族（family）。常用的协议族有：
+         IPv4 :AF_INET、IPv6:AF_INET6、Unix域协议:AF_LOCAL或称AF_UNIX、路由socket:AF_ROUTE、密钥socket:AF_KEY。
+
+         协议族决定了socket的地址类型，在通信中必须采用对应的地址。
+         如AF_INET决定了要用ipv4地址（32位的）与端口号（16位的）的组合、AF_UNIX决定了要用一个绝对路径名作为地址。
+ type：socket类型。常用的socket类型有:
+       TCP 字节流 socket:SOCK_STREAM、UDP 数据报 socket:SOCK_DGRAM、原始socket:SOCK_RAW（一般用于协议开发时使用）
+       、SOCK_PACKET、SOCK_SEQPACKET。
+
+       SOCK_RAW:原始套接字。允许对低层协议,如IP或ICMP直接访问，主要用于新的网络协议实现的测试。
+ protocol：指定协议。常用的协议有:IPPROTO_TCP(TCP传输协议)、IPPTOTO_UDP(UDP传输协议)、IPPROTO_SCTP(STCP传输协议),
+           通常使用0，此时会自动选择type类型对应的默认协议。
+           当type使用SOCK_RAW时，表示所开发的协议的编号
+ 返回值：成功返回从内核获得的文件描述符号，失败返回-1。
+
+ 当我们调用socket函数创建一个socket描述符时，返回的socket描述符它存在于协议族（address family，AF_XXX）空间中，但没有一个具体的地址。
+ 如果想要给它赋值一个地址，就必须调用bind()函数，否则当调用connect()、listen()时系统会自动随机分配一个端口。
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+ 功能：把socket与某个IP、某个端口进行绑定
+ sockfd：socket描述字，由socket()函数创建，唯一标识该socket。bind()函数就是将给这个描述字绑定一个名字。
+ addr：一个const struct sockaddr *指针，指向要绑定给sockfd的协议地址。是互联网sock地址传输的通用形式，
+       在实际使用时这个地址结构根据地址创建socket时的地址协议族的不同而不同，英特网使用
+       struct sockaddr_in（ipv4）， struct sockaddr_in6（ipv6）。
+ addrlen：socket地址的长度。
+ 返回值：成功返回0，失败返回-1。
+
+这个指针必须强制转换成通用套接字地址结构的指针（struct sockaddr *），其作用相当于（void *）
+之所以这样设计是因为套接字函数的设计早于ANSI C标准，那时还没有通用地址类型void *
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>int listen(int sockfd, int backlog);
+
+ 功能：监听由socket函数创建的socket描述字
+           listen 把套接字转换成监听套接字，这样内核就可接受在该套接字上的外来连接（eg:客户请求）
+           对于给定的监听socket，内核要维护两个队列
+           1.等待完成TCP三次握手的请求队列
+           2.已TCP三次握手完成连接的队列
+
+           请求进入未完成队列-&gt;请求进入已完成队列-&gt;请求出队列(accept)
+           listen设置的限制连接个数指未完成与已完成的和
+
+ sockfd：要监听的socket描述字
+ backlog：该socket可以排队的最大连接个数，socket()函数创建的socket默认是一个主动类型的，listen函数将socket变为被动类型的，等待客户的连接请求。
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+
+ 功能：接收等待队列中的客户端请求，从已完成连接队列返回第一个连接，如果已完成连接队列为空则阻塞。
+       生成一个socket描述符用于数据通信，俗称连接socket描述符
+ sockfd：socket描述字，由socket()函数创建，唯一标识该socket。俗称监听socket描述符。
+ addr：指向struct sockaddr *的指针，用于返回客户端的协议地址
+ addrlen：客户端协议地址的长度
+ 返回值：成功返回从内核获得的文件描述符号（连接socket描述符），失败返回-1。
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+ 功能：客户端通过调用connect函数来建立与服务器的连接。
+ sockfd：客户端的socket描述字
+ addr：服务器的socket地址，用法同bind（）中的addr
+ addrlen：socket地址的长度。
+ 返回值：成功返回0，失败返回-1。
+
+ 网络i/o操作
+ ssize_t read-api(int fd, void *buf, size_t count);
+ 返回读入的字节数，返回0表示套接字以关闭，返回-1表示出错并设置errno
+ ssize_t write(int fd, const void *buf, size_t count);
+ 对一个已关闭的套接字进行些操作返回-1并引发SIGPIPE信号
+</pre></div>
+</div>
+</div>
+<div class="section" id="send-recv-sendto-recvfrom-sendmsg-recvmsg">
+<h2>send/recv/sendto/recvfrom/sendmsg/recvmsg 发送/接收函数<a class="headerlink" href="#send-recv-sendto-recvfrom-sendmsg-recvmsg" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>TCP使用
+ssize_t send(int sockfd, const void *buf, size_t buf_len,  int  flags);
+返回值：成功返回发送的字节数，失败返回 -1
+
+ssize_t recv(int sockfd, void *buf, size_t buf_len, int flags);
+flags:指定接收行为
+      eg.MSG_OOB 接收带外数据
+         MSG_PEEK 接收但不清除缓存区中的数据
+
+
+UDP使用
+ssize_t sendto(int sockfd, const void *buf, size_t buf_len, int flags,const struct sockaddr *dest_addr, socklen_t addr_len);
+ssize_t recvfrom(int sockfd, void *buf, size_t buf_len, int flags,struct sockaddr *src_addr, socklen_t *addr_len);
+flags:用法同recv
+
+ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+</pre></div>
+</div>
+<p>udp方式中的客户端如果使用了connect，就可以使用tcp方式中使用的函数了,eg.send/recv</p>
+</div>
+<div class="section" id="getsockopt-setsockopt">
+<h2>getsockopt/setsockopt 套接字选项<a class="headerlink" href="#getsockopt-setsockopt" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><p>int getsockopt(int sockfd, int level, int optname,void <a href="#id2"><span class="problematic" id="id3">*</span></a>optval, socklen_t <a href="#id4"><span class="problematic" id="id5">*</span></a>optlen);
+int setsockopt(int sockfd, int level, int optname,void <a href="#id6"><span class="problematic" id="id7">*</span></a>optval, socklen_t <a href="#id8"><span class="problematic" id="id9">*</span></a>optlen);</p>
+<p>功能：套接字选项获取/设置</p>
+<p>sockfd：准备检验其选项的socket描述符。
+level：选项检验所在的协议层</p>
+<blockquote>
+<div>SOL_SOCKET：访问套接字层选项
+SOL_TCP：访问TCP层选项</div></blockquote>
+<dl class="docutils">
+<dt>optname:要检验的选项</dt>
+<dd>SOL_SOCKET   SO_REUSEADDR    //端口复用选项
+SOL_SOCKET   SO_KKEPALIVE    //检测断开的空闲连接
+SOL_SOCKET   SO_LINGER        //控制当调用close函数时套接口如何关闭。该选项只适用于面向连接的协议TCP。
+SOL_SOCKET   SO_BROADCAST    //广播选项
+SOL_SOCKET   SO_OOBINLINE    //越界数据接收选项
+SOL_SOCKET   SO_SNDBUF        //发送缓存区选项
+SOL_SOCKET   SO_RCVBUF        //接收缓存区选项
+SOL_SOCKET   SO_TYPE        //套接字类型选项
+SOL_SOCKET   SO_ERROR       //套接字错误选项
+SOL_SOCKET   SO_PASSCRED/SO_PEERCRED //在当前主机的本地套接口上控制与传递凭证，这两个选项仅适用于本地套接字(PF_LOCAL)
+SOL_TCP      SO_NODELAY</dd>
+</dl>
+<p>optval：选项值，eg:是否开启
+optlen：输入/输出参数，同时作为输入缓冲区的长度和返回的选项长度值
+返回值：成功时返回0，失败返回-1，而错误原因会存放在外部变量errno中。</p>
+<p>SO_REUSEADDR
+功能：可以重复绑定同一端口
+SO_REUSEADDR允许在同一端口上启动多个进程，但每个进程绑定的IP地址不同。
+SO_REUSEADDR允许单个进程绑定同一的端口到多个socket上，但每个socket绑定的ip地址不同。
+SO_REUSEADDR允许完全相同的地址和端口的重复绑定。
+SO_REUSEADDR只有在所有作用于某一端口的套接字/进程，已经设置SO_REUSEADDR选项的情况下生效，</p>
+<blockquote>
+<div>如果当前已经有一个未设置该选项的套接字/进程作用于该端口，其它套接字/进程无论SO_REUSEADDR选项设置与否，端口无法复用。</div></blockquote>
+<p>使用场景：防止服务器重启时之前绑定的端口还未释放
+现象：Address already in use
+原因：由 TCP 套接字状态 TIME_WAIT 引起。该状态在套接字关闭后约保留 2 到 4 分钟。在 TIME_WAIT 状态退出之后，套接字被删除，该地址才能被重新绑定而不出问题。</p>
+</div></blockquote>
+</div>
+<div class="section" id="inet-aton-inet-addr-inet-ntoa-inet-pton-inet-ntop">
+<h2>inet_aton/inet_addr/inet_ntoa/inet_pton/inet_ntop  地址转换函数<a class="headerlink" href="#inet-aton-inet-addr-inet-ntoa-inet-pton-inet-ntop" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>在ASCII地址字符串（IPv4的点分十进制或IPv6的格式）与网络字节序的二进制值之间的转换
+
+a:ASCILL n:network
+
+#include &lt;netinet/in.h&gt;
+#incluce &lt;arpa/inet.h&gt;
+
+inet_aton/inet_addr/inet_ntoa 适用于IPv4
+int inet_aton(const char *cp, struct in_addr *inp);
+功能：将网络地址转成网络二进制的数字
+返回值：成功(cp有效)返回1，否则为0
+注意：如果inp为NULL,对cp依然做有效性检查，但不存储结果。
+
+in_addr_t inet_addr(const char *cp);
+功能：将网络地址转成网络二进制的数字
+返回值：成功(cp有效)返回32位二进制IPv4地址，否则返回INADDR_NONE（通常情况下为常值0xffffffff，但在某些编译器中为常值-1）
+注意：当解析到的IP地址本来就是255.255.255.255时，与失败返回值冲突。
+
+char *inet_ntoa(struct in_addr in);
+返回值：返回指向一个点分十进制字符串的指针
+
+inet_pton/inet_ntop    适用于IPv4和IPv6
+int inet_pton(int af, const char *src, void *dst);
+返回值：成功返回1，cp无效或与af不对应返回0，出错(af不支持的地址族)返回-1
+
+const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
+返回值：成功返回指向一个ASCII地址字符串的指针，出错(af不支持的地址族)返回NULL
+</pre></div>
+</div>
+</div>
+<div class="section" id="htons-htonl-ntohs-ntohl">
+<h2>htons/htonl/ntohs/ntohl 主机序/网络序互转<a class="headerlink" href="#htons-htonl-ntohs-ntohl" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>htons()——“Host to Network Short” 主机字节顺序转换为网络字节顺序（对无符号短型进行操作2bytes）
+htonl()——“Host to Network Long” 主机字节顺序转换为网络字节顺序（对无符号长型进行操作4bytes）
+ntohs()——“Network to Host Short” 网络字节顺序转换为主机字节顺序（对无符号短型进行操作2bytes）
+ntohl()——“Network to Host Long ” 网络字节顺序转换为主机字节顺序（对无符号长型进行操作4bytes）
+</pre></div>
+</div>
+</div>
+<div class="section" id="shutdown-close">
+<h2>shutdown/close<a class="headerlink" href="#shutdown-close" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>int shutdown(int sockfd,int how);
+sockfd:切断通信的socket描述符。
+how: 0 不允许再接收数据
+     1 不允许再发送数据
+     2 不允许再接收/发送数据
+返回值:成功返回0，失败返回-1。
+
+int close(int sockfd);
+sockfd:切断通信的socket描述符(引用计数为0时)
+返回值：成功返回0，失败返回-1。
+
+close与shutdown的区别
+1.close只是把描述符的引用计数减1，只有引用计数为0时才会关闭socket.
+  shutdown可以直接关闭socket.
+2.close同时关闭读/写两个方向的连接。
+shutodwn 可以有选择性的关闭。
+</pre></div>
+</div>
+</div>
+<div class="section" id="select">
+<h2>select<a class="headerlink" href="#select" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,  struct timeval *timeout);
+n:所有set的最大值的fd值加1
+readfds:通过监视它来查看read的时候是否会被堵塞，注意，即便到了end-of-file，fd也是可读的。
+writefds:通过监视它来查看写的时候是否会被堵塞。
+exceptfd:通过监视它来查是否出现了异常。主要用来读取OOB数据，异常并不是指出错。
+如果成功，返回所有sets中描述符的个数；如果超时，返回0；如果出错，返回-1。
+
+注意：当一个套接口出错时，它会变得既可读又可写。
+
+如果状态有了改变，会将其他fd清零，只有那些发生改变了的fd保持置位，以用来指示set中的哪一个改变了状态。
+
+对fd_set进行操作：
+FD_CLR(int fd, fd_set *set);     //给set添加一个fd
+FD_ISSET(int fd, fd_set *set);   //判断指定fd是否在指定set中
+FD_SET(int fd, fd_set *set);     //给set删除一个fd
+FD_ZERO(fd_set *set);           //用来清空set
+fd_set是一个位向量, 每位表示一个描述符
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">接口</a><ul>
+<li><a class="reference internal" href="#sleep">sleep 三种睡眠函数</a></li>
+<li><a class="reference internal" href="#setitimer">setitimer 函数</a></li>
+<li><a class="reference internal" href="#socket-bind-listen-accept-connect">socket/bind/listen/accept/connect 建立连接函数</a></li>
+<li><a class="reference internal" href="#send-recv-sendto-recvfrom-sendmsg-recvmsg">send/recv/sendto/recvfrom/sendmsg/recvmsg 发送/接收函数</a></li>
+<li><a class="reference internal" href="#getsockopt-setsockopt">getsockopt/setsockopt 套接字选项</a></li>
+<li><a class="reference internal" href="#inet-aton-inet-addr-inet-ntoa-inet-pton-inet-ntop">inet_aton/inet_addr/inet_ntoa/inet_pton/inet_ntop  地址转换函数</a></li>
+<li><a class="reference internal" href="#htons-htonl-ntohs-ntohl">htons/htonl/ntohs/ntohl 主机序/网络序互转</a></li>
+<li><a class="reference internal" href="#shutdown-close">shutdown/close</a></li>
+<li><a class="reference internal" href="#select">select</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="enum.html" title="previous chapter">枚举值</a></li>
+      <li>Next: <a href="api-sample.html" title="next chapter">接口使用</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, xiaohei.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/api.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

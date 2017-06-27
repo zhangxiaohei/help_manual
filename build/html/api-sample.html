@@ -1,0 +1,545 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>接口使用 &mdash; help_manual 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="help_manual 0.1 documentation" href="index.html" />
+    <link rel="next" title="Linux C 函数手册" href="other.html" />
+    <link rel="prev" title="接口" href="api.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>接口使用<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="getopt-long">
+<h2>getopt_long 命令行解析<a class="headerlink" href="#getopt-long" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>#include &lt;getopt.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+void print_usage (FILE* stream, int exit_code,const char* program_name)
+{
+
+   fprintf (stream, &quot;Usage: %s options [ inputfile ... ]\n&quot;, program_name);
+   fprintf (stream,
+           &quot; -h --help Display this usage information.\n&quot;
+           &quot; -o --output filename Write output to file.\n&quot;
+           &quot; -v --verbose Print verbose messages.\n&quot;);
+   exit (exit_code);
+}
+
+int main (int argc, char* argv[])
+{
+   int next_option;
+   const char* const short_options = &quot;ho:v&quot;;
+   const struct option long_options[] = {
+       { &quot;help&quot;, 0, NULL, &#39;h&#39; },
+       { &quot;output&quot;, 1, NULL, &#39;o&#39; },
+       { &quot;verbose&quot;, 0, NULL, &#39;v&#39; },
+       { NULL, 0, NULL, 0 }
+   };
+   const char* output_filename = NULL;
+   int verbose = 0;
+   const char* program_name = argv[0];
+
+   do {
+       next_option = getopt_long (argc, argv, short_options,
+               long_options, NULL);
+       switch (next_option)
+       {
+
+           case &#39;h&#39;:
+               print_usage (stdout, 0,program_name);
+               break;
+           case &#39;o&#39;:
+               output_filename = optarg;
+               if(output_filename)
+                   printf(&quot;output filename is :%s\n&quot;, output_filename);
+               break ;
+           case &#39;v&#39;:
+               verbose = 1;
+                break  ;
+           case -1:
+               break ;
+           default:
+               abort ();
+               break ;
+       }
+   }
+   while (next_option != -1);
+
+   if (verbose) {
+       printf (&quot;Argument: %s\n&quot;, &quot;xiaohei&quot;);
+   }
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="dlopen">
+<h2>dlopen 运行时,加载库<a class="headerlink" href="#dlopen" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>/* fun.c */
+#include &lt;dlfcn.h&gt;
+void fun(void)
+{
+       printf(&quot;xiaohei\n&quot;);
+}
+gcc -fPIC -c fun.c
+gcc -shared -o libfun.so fun.o
+
+/* app.c */
+#include &lt;dlfcn.h&gt;
+int main(void)
+{
+       void (*func)(void);
+       void *handler = dlopen(&quot;./libfun.so&quot;,RTLD_LAZY);
+       if(!handler)
+       {
+               printf(&quot;%s\n&quot;,dlerror());
+               return 1;
+       }
+       func = dlsym(handler, &quot;fun&quot;);
+    if(!func)
+       {
+               printf(&quot;%s\n&quot;,dlerror());
+         dlclose(handler);
+               return 1;
+       }
+       func();
+       dlclose(handler);
+       return 0;
+}
+
+gcc app.c -o app -ldl //链接libdl 库
+</pre></div>
+</div>
+</div>
+<div class="section" id="tcp-client-server">
+<h2>TCP client/server<a class="headerlink" href="#tcp-client-server" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>TCP client
+#include &lt;stdio.h&gt;
+#include &lt;strings.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;string.h&gt;
+
+#define INIT_VALUE 0
+#define BUF_LEN 256
+
+int main(void)
+{
+   int socket_fd = INIT_VALUE, ret = INIT_VALUE;
+   ssize_t send_size = INIT_VALUE, read_size = INIT_VALUE;
+   char buf[BUF_LEN] = &quot;hello server!&quot;;
+   struct sockaddr_in addr_in;
+
+   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+   if(-1 == socket_fd)
+       perror(&quot;call socket failed!&quot;);
+
+   bzero(&amp;addr_in, sizeof(addr_in));
+   addr_in.sin_family = AF_INET;
+   addr_in.sin_port = htons(2000);
+   inet_pton(AF_INET, &quot;10.240.197.172&quot;,&amp;addr_in.sin_addr);
+
+   ret = connect(socket_fd,(struct sockaddr *)&amp;addr_in, sizeof(addr_in));
+   if(-1 == ret)
+       perror(&quot;call connect failed!&quot;);
+
+   send_size = send(socket_fd, buf, strlen(buf), 0);
+   printf(&quot;write length:%d %s\n&quot;,send_size, buf);
+   bzero(buf, BUF_LEN);
+   read_size = read(socket_fd, buf, BUF_LEN);
+   buf[read_size] = 0;
+   printf(&quot;read length:%d %s\n&quot;,read_size, buf);
+
+   close(socket_fd);
+
+   return;
+}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>TCP server
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+
+#define INIT_VALUE 0
+#define BUF_LEN 256
+int main(void)
+{
+   int socket_fd = INIT_VALUE, connect_fd = INIT_VALUE, ret = INIT_VALUE, output_len = INIT_VALUE, flag = 1;
+   ssize_t send_size = INIT_VALUE,read_size = INIT_VALUE;
+   char buf[BUF_LEN] = &quot;hello,world!&quot;;
+   struct sockaddr_in addr_in,addr_output;
+
+   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+   if(-1 == socket_fd)
+       perror(&quot;call socket failed!&quot;);
+
+   bzero(&amp;addr_in, sizeof(addr_in));
+   addr_in.sin_family = AF_INET;
+   addr_in.sin_port = htons(2000);
+   addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
+
+   setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &amp;flag, sizeof(int));
+   ret = bind(socket_fd, (const struct sockaddr *)&amp;addr_in, sizeof(addr_in));
+   if(-1 == ret)
+       perror(&quot;call bind failed!&quot;);
+
+   ret = listen(socket_fd, 5);
+   if(-1 == ret)
+       perror(&quot;call listen failed!&quot;);
+
+   bzero(&amp;addr_output, sizeof(addr_output));
+   output_len = sizeof(addr_output);
+   connect_fd = accept(socket_fd, (struct sockaddr *)&amp;addr_output, &amp;output_len);
+   if(-1 == connect_fd)
+       perror(&quot;call accept failed!&quot;);
+
+   bzero(buf, BUF_LEN);
+   read_size = recv(connect_fd, buf, BUF_LEN, 0);
+   printf(&quot;read length:%d %s\n&quot;,read_size, buf);
+
+   strncat(buf, &quot;-xiaohei&quot;, strlen(&quot;-xiaohei&quot;));
+   send_size = write(connect_fd, buf, strlen(buf));
+   printf(&quot;write length:%d %s\n&quot;,send_size, buf);
+
+   close(connect_fd);
+   close(socket_fd);
+
+   return;
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="udp-client-server">
+<h2>UDP client/server<a class="headerlink" href="#udp-client-server" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>UDP client
+#include &lt;stdio.h&gt;
+#include &lt;strings.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;string.h&gt;
+
+#define INIT_VALUE 0
+#define BUF_LEN 256
+
+int main(void)
+{
+   int socket_fd = INIT_VALUE;
+   ssize_t send_size = INIT_VALUE;
+   char buf[BUF_LEN] = { 0 };
+   struct sockaddr_in addr_in;
+
+   socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+   if(-1 == socket_fd)
+       perror(&quot;call socket failed!&quot;);
+
+   bzero(&amp;addr_in, sizeof(addr_in));
+   addr_in.sin_family = AF_INET;
+   addr_in.sin_port = htons(2000);
+   inet_pton(AF_INET, &quot;10.240.197.172&quot;,&amp;addr_in.sin_addr);
+
+   strncpy(buf, &quot;hello server!&quot;, strlen(&quot;hello server!&quot;));
+   send_size = sendto(socket_fd, buf, strlen(buf), 0, (struct sockaddr *)&amp;addr_in, sizeof(addr_in));
+   printf(&quot;write length:%d %s\n&quot;,send_size, buf);
+
+   bzero(buf, BUF_LEN);
+   recvfrom(socket_fd, buf, BUF_LEN, 0, NULL, NULL);
+   printf(&quot;read length:%d %s\n&quot;,strlen(buf), buf);
+
+   close(socket_fd);
+
+   return;
+}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>UDP server
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+
+#define INIT_VALUE 0
+#define BUF_LEN 256
+int main(void)
+{
+   int socket_fd = INIT_VALUE, ret = INIT_VALUE, addr_in_len = BUF_LEN, flag = 1;
+   ssize_t send_size = INIT_VALUE;
+   char buf[BUF_LEN] = { 0 };
+   struct sockaddr_in addr_in, addr_output;
+
+   socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+   if(-1 == socket_fd)
+       perror(&quot;call socket failed!&quot;);
+
+   bzero(&amp;addr_in, sizeof(addr_in));
+   addr_in.sin_family = AF_INET;
+   addr_in.sin_port = htons(2000);
+   addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
+
+   setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &amp;flag, sizeof(int));
+   ret = bind(socket_fd, (const struct sockaddr *)&amp;addr_in, sizeof(addr_in));
+   if(-1 == ret)
+       perror(&quot;call bind failed!&quot;);
+
+   addr_in_len = sizeof(struct sockaddr_in);
+
+   bzero(buf, BUF_LEN);
+   recvfrom(socket_fd, buf, BUF_LEN, 0, (struct sockaddr *)&amp;addr_in, &amp;addr_in_len);
+   printf(&quot;read length:%d %s\n&quot;,strlen(buf), buf);
+
+   strncat(buf, &quot;-xiaohei&quot;, strlen(&quot;-xiaohei&quot;));
+   send_size = sendto(socket_fd, buf, strlen(buf), 0, (struct sockaddr *)&amp;addr_in, addr_in_len);
+   printf(&quot;write length:%d %s\n&quot;,send_size, buf);
+
+   close(socket_fd);
+
+   return;
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="inet-aton-inet-addr-inet-ntoa-inet-pton-inet-ntop">
+<h2>inet_aton/inet_addr/inet_ntoa/inet_pton/inet_ntop 地址转换函数<a class="headerlink" href="#inet-aton-inet-addr-inet-ntoa-inet-pton-inet-ntop" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>#include &lt;stdio.h&gt;
+#include &lt;strings.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;netinet/in.h&gt;
+
+int main(void)
+{
+   int ret = 0;
+   struct sockaddr_in addr_in;
+   char *str = NULL;
+   char str_addr[256] = { 0 };
+   char *ip_string = &quot;10.240.197.172&quot;;
+   unsigned int ip_int = 0xacc5f00a;
+
+   /* inet_aton */
+   addr_in.sin_addr.s_addr = 0;
+   ret = inet_aton(ip_string, &amp;addr_in.sin_addr);
+   printf(&quot;inet_aton 000, ret = %d, addr = %x\n&quot;,ret, addr_in.sin_addr.s_addr);
+
+   addr_in.sin_addr.s_addr = 0;
+   ret = inet_aton(ip_string, NULL);
+   printf(&quot;inet_aton 111, ret = %d, addr = %x\n&quot;,ret, addr_in.sin_addr.s_addr);
+
+   addr_in.sin_addr.s_addr = 0;
+   ret = inet_aton(&quot;aaa&quot;, &amp;addr_in.sin_addr);
+   printf(&quot;inet_aton 222, ret = %d, addr = %x\n&quot;,ret, addr_in.sin_addr.s_addr);
+
+   /* inet_addr */
+   addr_in.sin_addr.s_addr = 0;
+   addr_in.sin_addr.s_addr = inet_addr(&quot;aaa&quot;);
+   printf(&quot;inet_addr aaa, addr = %x\n&quot;, addr_in.sin_addr.s_addr);
+
+   addr_in.sin_addr.s_addr = 0;
+   addr_in.sin_addr.s_addr = inet_addr(ip_string);
+   printf(&quot;inet_addr bbb, addr = %x\n&quot;, addr_in.sin_addr.s_addr);
+
+   /* inet_ntoa */
+   addr_in.sin_addr.s_addr = 123;
+   str = inet_ntoa(addr_in.sin_addr);
+   printf(&quot;inet_ntoa 333, addr = %s\n&quot;, str);
+
+   addr_in.sin_addr.s_addr = ip_int;
+   str = inet_ntoa(addr_in.sin_addr);
+   printf(&quot;inet_ntoa 444, addr = %s\n&quot;, str);
+
+   /* inet_pton */
+   addr_in.sin_addr.s_addr = 0;
+   ret = inet_pton(AF_INET, ip_string, &amp;addr_in.sin_addr);
+   printf(&quot;inet_pton ccc, ret = %d, addr = %x\n&quot;,ret, addr_in.sin_addr.s_addr);
+
+   addr_in.sin_addr.s_addr = 0;
+   ret = inet_pton(AF_INET, &quot;aaa&quot;, &amp;addr_in.sin_addr);
+   printf(&quot;inet_pton ddd, ret = %d, addr = %x\n&quot;,ret, addr_in.sin_addr.s_addr);
+
+   addr_in.sin_addr.s_addr = 0;
+   ret = inet_pton(AF_INET6, ip_string, &amp;addr_in.sin_addr);
+   printf(&quot;inet_pton eee, ret = %d, addr = %x\n&quot;,ret, addr_in.sin_addr.s_addr);
+
+   addr_in.sin_addr.s_addr = 0;
+   ret = inet_pton(AF_LOCAL, ip_string, &amp;addr_in.sin_addr);
+   printf(&quot;inet_pton fff, ret = %d, addr = %x\n&quot;, ret, addr_in.sin_addr.s_addr);
+
+   /* inet_ntop */
+   addr_in.sin_addr.s_addr = ip_int;
+   str = (char *)inet_ntop(AF_INET, &amp;addr_in.sin_addr, str_addr, INET_ADDRSTRLEN);
+   printf(&quot;inet_ntop 555, str = %s, addr = %s\n&quot;, str, str_addr);
+
+   bzero(str_addr, 256);
+   str = (char *)inet_ntop(AF_INET6, &amp;addr_in.sin_addr, str_addr, INET6_ADDRSTRLEN);
+   printf(&quot;inet_ntop 666, str = %s, addr = %s\n&quot;, str, str_addr);
+
+   bzero(str_addr, 256);
+   str = (char *)inet_ntop(AF_LOCAL, &amp;addr_in.sin_addr, str_addr, INET_ADDRSTRLEN);
+   printf(&quot;inet_ntop 777, str = %s, addr = %s\n&quot;, str, str_addr);
+
+   return;
+}
+
+--result
+inet_aton 000, ret = 1, addr = acc5f00a
+inet_aton 111, ret = 1, addr = 0
+inet_aton 222, ret = 0, addr = 0
+inet_addr aaa, addr = ffffffff
+inet_addr bbb, addr = acc5f00a
+inet_ntoa 333, addr = 123.0.0.0
+inet_ntoa 444, addr = 10.240.197.172
+inet_pton ccc, ret = 1, addr = acc5f00a
+inet_pton ddd, ret = 0, addr = 0
+inet_pton eee, ret = 0, addr = 0
+inet_pton fff, ret = -1, addr = 0
+inet_ntop 555, str = 10.240.197.172, addr = 10.240.197.172
+inet_ntop 666, str = af0:c5ac:850a:4000::a0fb:a02a, addr = af0:c5ac:850a:4000::a0fb:a02a
+inet_ntop 777, str = (null), addr =
+</pre></div>
+</div>
+</div>
+<div class="section" id="gethostbyname">
+<h2>gethostbyname 函数<a class="headerlink" href="#gethostbyname" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>#include &lt;stdio.h&gt;
+#include &lt;netdb.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;strings.h&gt;
+
+/* 通过域名得到IP地址 */
+int main(int argc, char **argv)
+{
+   struct hostent *host;
+   char **pptr;
+   char str[32];
+
+   if((host = gethostbyname(&quot;www.baidu.com&quot;)) == NULL)
+   {
+       printf(&quot; gethostbyname error.\n&quot;);
+       return 0;
+   }
+
+   switch(host-&gt;h_addrtype)
+   {
+       case AF_INET:
+       case AF_INET6:
+           for(pptr = host-&gt;h_addr_list; NULL != *pptr; pptr++)
+           {
+                   printf(&quot;address:%s\n&quot;, inet_ntop(host-&gt;h_addrtype, *pptr, str, sizeof(str)));
+                   bzero(str, 32);
+           }
+
+       break;
+       default:
+           printf(&quot;unknown address type\n&quot;);
+       break;
+   }
+
+   return 0;
+}
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">接口使用</a><ul>
+<li><a class="reference internal" href="#getopt-long">getopt_long 命令行解析</a></li>
+<li><a class="reference internal" href="#dlopen">dlopen 运行时,加载库</a></li>
+<li><a class="reference internal" href="#tcp-client-server">TCP client/server</a></li>
+<li><a class="reference internal" href="#udp-client-server">UDP client/server</a></li>
+<li><a class="reference internal" href="#inet-aton-inet-addr-inet-ntoa-inet-pton-inet-ntop">inet_aton/inet_addr/inet_ntoa/inet_pton/inet_ntop 地址转换函数</a></li>
+<li><a class="reference internal" href="#gethostbyname">gethostbyname 函数</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="api.html" title="previous chapter">接口</a></li>
+      <li>Next: <a href="other.html" title="next chapter">Linux C 函数手册</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api-sample.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, xiaohei.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/api-sample.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
